@@ -1,3 +1,5 @@
+A mirror with a screen display behind it. The display will be made with Python TKinter and will have the date, time, weather, and basic spotify commands such as play/pause and next/previous song. Mirror will also feature voice activation
+
 Smart Mirror features:
 
 Clock:
