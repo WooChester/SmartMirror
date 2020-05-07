@@ -29,7 +29,6 @@ Commands:
   
   - All commands can be activated via voice command
   
-  
 To be implemented:
   - Add another raspberry pi to make a microphone/controller. Will solve the issue of poor audio translation
   - Currently needs to be updated with voice command. Tests were positive and voice command is ready to be implemented. 
@@ -37,5 +36,9 @@ To be implemented:
     - Portrait will place all widgets at the top section of the mirror (Implemented)
     - Landscape will place all widgets at the left section of the mirror 
   
+              **************************************
+                               NEWS
+              **************************************
+Pictures to come! The parts are coming in the mail soon
   
   
