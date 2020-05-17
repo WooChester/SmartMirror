@@ -5,6 +5,8 @@ import json
 from PIL import Image, ImageTk
 import traceback
 import spotipy
+from flask import Flask, render_template, request, redirect, url_for
+import _thread
 
 xx_large_text_size = 96
 x_large_text_size = 64
@@ -20,6 +22,47 @@ redirect_uri = "http://localhost:8888/"
 scope = "user-modify-playback-state playlist-read-collaborative user-read-playback-state streaming app-remote-control"
 
 alexa_id = 'd30c83c1-a672-4d2f-bd30-2261f68c8afe'
+
+app = Flask(__name__)
+app.debug = False
+app.use_reloader = False
+g_COMMAND = ''
+
+g_playing = False
+
+
+@app.route("/", methods=['POST', 'GET'])
+def index():
+    global g_playing
+    if request.method == 'POST':
+        global g_COMMAND
+        g_COMMAND = request.form['command']
+        time.sleep(1)
+        if not g_playing:
+            if g_COMMAND == "p":
+                return render_template("pause.html")
+            return render_template("play.html")
+        else:
+            if g_COMMAND == 'p':
+                return render_template("play.html")
+            else:
+                try:
+                    return redirect("")
+                except Exception as e:
+                    return "There was an issue"
+    else:
+        if g_playing:
+            return render_template("pause.html")
+        return render_template("play.html")
+
+
+@app.route("/postmethod", methods=['POST'])
+def vol_index():
+    pass
+
+
+def flask_thread():
+    app.run(debug=False, host="0.0.0.0", port=5000)
 
 
 def song_pixel_sz(song):
@@ -98,13 +141,13 @@ class Spotify(Frame):
                                   height=self.winfo_screenheight() // 8, highlightbackground='black')
 
         self.currently_playing = ''
-        self.cnv_currently_playing = self.song_canvas.create_text(int(self.song_canvas['width'])//1.9, 50,
+        self.cnv_currently_playing = self.song_canvas.create_text(int(self.song_canvas['width']) // 1.9, 50,
                                                                   text=self.currently_playing,
                                                                   font=('Times New Roman', medium_text_size, 'bold'),
                                                                   fill='white', tags="marquee_song", anchor=CENTER)
 
         self.current_artist = ''
-        self.cnv_current_artist = self.song_canvas.create_text(int(self.song_canvas['width'])//1.9, 100,
+        self.cnv_current_artist = self.song_canvas.create_text(int(self.song_canvas['width']) // 1.9, 100,
                                                                text=self.current_artist,
                                                                font=('Times New Roman', small_text_size, 'bold'),
                                                                fill='white', tags="marquee_artist", anchor=CENTER)
@@ -155,6 +198,7 @@ class Spotify(Frame):
         if token:
             sp = spotipy.Spotify(auth=token)
             cp = sp.currently_playing()
+            global g_playing
 
             if cp is not None:
 
@@ -162,6 +206,7 @@ class Spotify(Frame):
                 current_artist = cp['item']['album']['artists'][0]['name']
 
                 if cp['is_playing']:
+                    g_playing = True
                     self.is_pause = False
                     self.idle = 0
                     self.hidden = False
@@ -185,6 +230,7 @@ class Spotify(Frame):
                             self.song_canvas.coords("marquee_artist", int(self.song_canvas['width']) // 1.9, 100)
                 else:
                     self.is_pause = True
+                    g_playing = False
                     self.song_length = (cp['item']['duration_ms'] - cp['progress_ms']) + (
                             4 - (cp['item']['duration_ms'] - cp['progress_ms']) % 4)
             else:
@@ -203,10 +249,13 @@ class Spotify(Frame):
         if token:
             sp = spotipy.Spotify(auth=token)
             cp = sp.currently_playing()
+            global g_playing
 
             if cp is not None and cp['is_playing'] is True:
                 sp.pause_playback()
                 self.is_pause = True
+                g_playing = False
+
             else:
                 active = False
                 device_list = sp.devices()['devices']
@@ -222,9 +271,13 @@ class Spotify(Frame):
                     # self.curr_volume = d['volume_percent']
 
                 self.is_pause = False
-                sp.transfer_playback(device_id=device, force_play=True)
-                sp.shuffle(True)
-                self.update_song()
+                try:
+                    sp.transfer_playback(device_id=device, force_play=True)
+                    sp.shuffle(True)
+                    g_playing = True
+                    self.update_song()
+                except Exception as e:
+                    self.play_pause()
 
     def next_song(self):
         token = spotipy.prompt_for_user_token("chesterwoo409", scope=scope, client_id=client_id,
@@ -242,7 +295,7 @@ class Spotify(Frame):
         if token:
             sp = spotipy.Spotify(auth=token)
             sp.previous_track()
-            self.spotify.update_song()
+            self.update_song()
 
     @staticmethod
     def volume(command):
@@ -421,7 +474,7 @@ class Weather(Frame):
         if self.rain_chance != rain_chance2:
             self.rain_chance = rain_chance2
 
-        self.after(600000, self.get_weather)
+        self.after(1800000, self.get_weather)
         if self.idle > 6 and not self.hidden:
             self.toggle_weather()
 
@@ -508,6 +561,9 @@ class FullscreenWindow:
     def __init__(self):
         self.tk = Tk()
         self.tk.configure(bg='black')
+        self.fs = True
+        #self.tk.attributes("-fullscreen", self.fs)
+
         self.topFrame = Frame(self.tk, bg='black')
         self.topFrame.pack(side=TOP, fill=X)
 
@@ -521,6 +577,8 @@ class FullscreenWindow:
         self.weather.pack(side=RIGHT, anchor=N, padx=40, pady=40)
 
         # Bindings #
+        self.tk.bind("<Return>", self.toggle_fullscreen)
+        self.tk.bind("<Escape>", self.toggle_fullscreen)
         self.tk.bind("a", lambda event: self.weather.toggle_weather())
         self.tk.bind("s", lambda event: self.weather.toggle_weather_details())
         self.tk.bind("d", lambda event: self.weather.toggle_full_weather())
@@ -530,7 +588,37 @@ class FullscreenWindow:
         self.tk.bind("=", lambda event: self.spotify.volume("up"))
         self.tk.bind("-", lambda event: self.spotify.volume("down"))
 
+        self.check_web()
+
+    def toggle_fullscreen(self, event=None):
+        self.fs = not self.fs  # Just toggling the boolean
+        self.tk.attributes("-fullscreen", self.fs)
+
+    def check_web(self):
+        global g_COMMAND
+        if g_COMMAND != '':
+            print(g_COMMAND)
+            if g_COMMAND == '<<':
+                self.spotify.prev_song()
+            elif g_COMMAND == '>>':
+                self.spotify.next_song()
+            elif g_COMMAND == 'p':
+                self.spotify.play_pause()
+            elif g_COMMAND == "+":
+                self.spotify.volume('up')
+            elif g_COMMAND == "-":
+                self.spotify.volume("down")
+            elif g_COMMAND == "Toggle Weather":
+                self.weather.toggle_full_weather()
+            f = open("command_times.txt", "a")
+            f.write("\nCommand: {}\nTime: {}\n".format(g_COMMAND, self.clock.date + " at " + self.clock.time))
+            f.close()
+
+            g_COMMAND = ''
+        self.tk.after(500, self.check_web)
+
 
 if __name__ == '__main__':
     w = FullscreenWindow()
+    _thread.start_new_thread(flask_thread, ())
     w.tk.mainloop()
