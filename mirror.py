@@ -62,7 +62,7 @@ def vol_index():
 
 
 def flask_thread():
-    app.run(debug=False, host="0.0.0.0", port=9000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
 
 
 def song_pixel_sz(song):
@@ -364,8 +364,8 @@ class Weather(Frame):
                                                            fill='white', tags="marquee_loc", anchor='w')
 
         self.line_bar = self.detail_canvas.create_line(
-            int(self.forecast_Canvas['width'])//4, -1*int(self.forecast_Canvas['width'])//3,
-            int(self.forecast_Canvas['width']), -1*int(self.forecast_Canvas['width'])//3, fill='black', tags="marquee_line")
+            int(self.forecast_Canvas['width'])//4, -1*int(self.forecast_Canvas['height']),
+            int(self.forecast_Canvas['width']), -1*int(self.forecast_Canvas['height']), fill='black', tags="marquee_line")
 
         self.wind_speed = ''
         self.cnv_wind_speed = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 3, - 70,
@@ -570,13 +570,13 @@ class FullscreenWindow:
         self.topFrame.pack(side=TOP, fill=X)
 
         self.clock = Clock(self.topFrame)
-        self.clock.pack(side=LEFT, anchor=N, padx=40, pady=40)
+        self.clock.pack(side=LEFT, anchor=N, padx=self.tk.winfo_screenwidth()//36, pady=40)
 
         self.spotify = Spotify(self.topFrame)
         self.spotify.pack(side=LEFT, anchor=N, pady=40)
 
         self.weather = Weather(self.topFrame)
-        self.weather.pack(side=LEFT, anchor=N, padx=40, pady=40)
+        self.weather.pack(side=LEFT, anchor=N, padx=self.tk.winfo_screenwidth()//36, pady=40)
 
         # Bindings #
         self.tk.bind("<Return>", self.toggle_fullscreen)
