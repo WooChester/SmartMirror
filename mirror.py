@@ -62,7 +62,7 @@ def vol_index():
 
 
 def flask_thread():
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=9000)
 
 
 def song_pixel_sz(song):
@@ -167,8 +167,8 @@ class Spotify(Frame):
     def display_song(self):  # Handles what is being displayed
         if self.idle >= 600000:
             self.fade_music()
-            self.after(5000, self.display_song)
             self.update_song()
+            self.after(5000, self.display_song)
         else:
             self.idle += 1000 // 40
             self.song_canvas.itemconfig(self.cnv_currently_playing, text=self.currently_playing)
@@ -341,7 +341,7 @@ class Weather(Frame):
                                                                 fill='white', tags="marquee_temp", anchor='w')
         self.icon = ''
         self.photo = ''
-        self.cnv_icon = self.forecast_Canvas.create_image(int(self.forecast_Canvas['width']) + 110, 50,
+        self.cnv_icon = self.forecast_Canvas.create_image(int(self.forecast_Canvas['width']) + int(self.forecast_Canvas['width'])//3, 50,
                                                           image=self.icon,
                                                           tags='marquee_icon', anchor='w')
 
@@ -358,26 +358,28 @@ class Weather(Frame):
                                     height=self.winfo_screenheight() // 5, highlightbackground='black')
 
         self.location = ''
-        self.cnv_location = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 2.5, -130,
+        self.cnv_location = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 2.5, - 130,
                                                            text=self.location,
                                                            font=('Helvetica', small_text_size, 'bold'),
                                                            fill='white', tags="marquee_loc", anchor='w')
 
-        self.line_bar = self.detail_canvas.create_line(75, -100, 300, -100, fill='black', tags="marquee_line")
+        self.line_bar = self.detail_canvas.create_line(
+            int(self.forecast_Canvas['width'])//4, -1*int(self.forecast_Canvas['width'])//3,
+            int(self.forecast_Canvas['width']), -1*int(self.forecast_Canvas['width'])//3, fill='black', tags="marquee_line")
 
         self.wind_speed = ''
-        self.cnv_wind_speed = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 3, -70,
+        self.cnv_wind_speed = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 3, - 70,
                                                              text=self.wind_speed,
                                                              font=('Helvetica', x_small_text_size, 'bold'),
                                                              fill='white', tags="marquee_ws", anchor='w')
         self.uv_index = ''
-        self.cnv_uv_index = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 3, -40,
+        self.cnv_uv_index = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 3, - 40,
                                                            text=self.uv_index,
                                                            font=('Helvetica', x_small_text_size, 'bold'),
                                                            fill='white', tags="marquee_uv", anchor='w')
 
         self.rain_chance = ''
-        self.cnv_rain_chance = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 3, -10,
+        self.cnv_rain_chance = self.detail_canvas.create_text(int(self.detail_canvas['width']) // 3, - 10,
                                                               text=self.rain_chance,
                                                               font=('Helvetica', x_small_text_size, 'bold'),
                                                               fill='white', tags="marquee_rain", anchor='w')
@@ -475,7 +477,7 @@ class Weather(Frame):
             self.rain_chance = rain_chance2
 
         self.after(1800000, self.get_weather)
-        if self.idle > 6 and not self.hidden:
+        if self.idle > 2 and not self.hidden:
             self.toggle_weather()
 
     @staticmethod
@@ -574,7 +576,7 @@ class FullscreenWindow:
         self.spotify.pack(side=LEFT, anchor=N, pady=40)
 
         self.weather = Weather(self.topFrame)
-        self.weather.pack(side=RIGHT, anchor=N, padx=40, pady=40)
+        self.weather.pack(side=LEFT, anchor=N, padx=40, pady=40)
 
         # Bindings #
         self.tk.bind("<Return>", self.toggle_fullscreen)
